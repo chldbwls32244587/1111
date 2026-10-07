@@ -274,12 +274,14 @@ Codex가 구현을 완료했다고 판단하려면 다음 조건을 모두 만�
 
 ## 9. 원문과 구현 사이의 확인 항목
 
-다음 항목은 PDF에서 명확하지 않았던 사항에 대해 최종 SQL과 회의 결정에 반영한 내용 및 남은 확인사항이다.
+다음 항목은 PDF에 구조가 표시되어 있으나 실제 DDL에서 최종 확인해야 한다.
 
-- PDF ERD에는 `created_at`, `updated_at`, `submitted_at`, `reviewed_at`, `uploaded_at`, `selected`가 표시되지만 일부 상세 표에는 생략되어 있다. 최종 SQL에는 해당 컬럼을 모두 포함했으며, 본 명세에도 실제 타입, NULL 허용 여부, 기본값을 반영했다.
-- PDF는 날짜/시각 컬럼의 정밀도와 타임존을 지정하지 않았다. 최종 SQL에서는 시각 컬럼을 소수 초 정밀도를 별도로 지정하지 않은 `DATETIME`으로 정의했다. 애플리케이션과 DB의 타임존 정책은 별도로 확정해야 한다.
-- PDF는 `settlements.receipt_id`와 `ocr_results.selected`의 UNIQUE 여부를 지정하지 않았다. 최종 SQL에서는 `settlements.receipt_id`에 UNIQUE 제약을 적용하여 영수증당 정산 기록을 최대 한 개로 제한했다. OCR 결과는 여러 개 보존하되, 영수증당 `selected = TRUE`인 결과를 최대 한 개로 유지하는 규칙은 백엔드에서 처리하도록 정했다.
-- 최종 SQL에서는 `receipt_files.receipt_id`에 UNIQUE 제약을 적용하여 영수증당 파일 기록을 최대 한 개로 제한했다. 회의 결정에 따라 재제출 시 새 이미지만 보관하며, 기존 파일 정보 갱신과 Object Storage의 이전 이미지 삭제는 백엔드에서 처리한다.
-- 회의 결정에 따라 `receipts.status`에서 `OCR_PENDING`, `OCR_DONE`을 제거하고, `ocr_results.status`에 `OCR_PENDING`, `OCR_DONE`, `OCR_FAILED`를 정의하여 영수증 업무 상태와 OCR 처리 상태를 분리했다.
-- 회의 결정에 따라 `ocr_results`에 `raw_text`, `parsed_payload`, `parser_version`, `error_message` 컬럼을 추가했다.
+- PDF ERD에는 `created_at`, `updated_at`, `submitted_at`, `reviewed_at`, `uploaded_at`, `selected`가 표시되지만 일부 상세 표에는 생략되어 있다. 본 명세는 ERD에 표시된 컬럼을 기준으로 포함했다.
+  → 답변: 최종 schema.sql에 해당 컬럼을 모두 포함했습니다. `reviewed_at`은 NULL을 허용하고, 나머지 컬럼은 NOT NULL로 지정했습니다. `selected`의 기본값은 FALSE입니다.
+
+- PDF는 날짜/시각 컬럼의 정밀도와 타임존을 지정하지 않았다. 애플리케이션과 DB의 타임존 정책을 구현 전에 확정한다.
+
+- PDF는 `settlements.receipt_id`와 `ocr_results.selected`의 UNIQUE 여부를 지정하지 않았다. 중복 정산 방지와 선택 OCR 결과의 단일성은 서비스 정책 확정 후 별도 제약으로 결정한다.
+  → 답변: 최종 schema.sql에서 `settlements.receipt_id`에 UNIQUE 제약을 적용하여 영수증당 정산 기록을 최대 한 개로 제한했습니다. `ocr_results.selected`에는 UNIQUE 제약을 적용하지 않았으며, 영수증당 최대 한 개만 TRUE로 선택하는 규칙은 백엔드에서 처리하도록 SQL 주석에 명시했습니다.
+
 - PDF의 ERD 링크는 `erdcloude 링크`로만 표시되어 있어 외부 ERD 링크를 이 문서에 임의로 만들지 않았다.
